@@ -18,7 +18,7 @@ import org.springframework.statemachine.state.State;
 public class StateMachineConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
 
     @Override
-    public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
+    public void configure(final StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
         transitions
                 .withExternal()
                 .source(com.nurettin.orderservice.domain.OrderState.SUBMITTED).target(com.nurettin.orderservice.domain.OrderState.PAID).event(com.nurettin.orderservice.domain.OrderEvent.PAY)
@@ -33,7 +33,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<OrderState
 
 
     @Override
-    public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
+    public void configure(final StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
         states.withStates()
                 .initial(com.nurettin.orderservice.domain.OrderState.SUBMITTED)
                 .state(com.nurettin.orderservice.domain.OrderState.PAID)
@@ -42,11 +42,11 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<OrderState
     }
 
     @Override
-    public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent> config) throws
+    public void configure(final StateMachineConfigurationConfigurer<OrderState, OrderEvent> config) throws
             Exception {
-        StateMachineListenerAdapter<OrderState, OrderEvent> adapter = new StateMachineListenerAdapter<OrderState, OrderEvent>() {
+        final StateMachineListenerAdapter<OrderState, OrderEvent> adapter = new StateMachineListenerAdapter<OrderState, OrderEvent>() {
             @Override
-            public void stateChanged(State<OrderState, OrderEvent> from, State<OrderState, OrderEvent> to) {
+            public void stateChanged(final State<OrderState, OrderEvent> from, final State<OrderState, OrderEvent> to) {
                 log.info(String.format("stateChanged( from: %s, to %s)", from + "", to + ""));
             }
         };

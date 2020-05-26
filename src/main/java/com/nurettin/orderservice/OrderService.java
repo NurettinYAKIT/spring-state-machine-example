@@ -27,14 +27,14 @@ public class OrderService {
     private final OrderRepository repository;
     private final StateMachineFactory<OrderState, OrderEvent> stateMachineFactory;
 
-    public Order create(Date date) {
+    public Order create(final Date date) {
         return this.repository.save(new Order(date, com.nurettin.orderservice.domain.OrderState.SUBMITTED));
     }
 
-    StateMachine<OrderState, OrderEvent> pay(Long orderId, String paymentConfirmationNumber) {
-        StateMachine<OrderState, OrderEvent> stateMachine = this.build(orderId);
+    StateMachine<OrderState, OrderEvent> pay(final Long orderId, final String paymentConfirmationNumber) {
+        final StateMachine<OrderState, OrderEvent> stateMachine = this.build(orderId);
 
-        Message<OrderEvent> paymentMessage = MessageBuilder.withPayload(com.nurettin.orderservice.domain.OrderEvent.PAY)
+        final Message<OrderEvent> paymentMessage = MessageBuilder.withPayload(com.nurettin.orderservice.domain.OrderEvent.PAY)
                 .setHeader(ORDER_ID_HEADER, orderId)
                 .setHeader(PAYMENT_CONFIRMATION_NUMBER, paymentConfirmationNumber)
                 .build();
@@ -43,10 +43,10 @@ public class OrderService {
         return stateMachine;
     }
 
-    public StateMachine<OrderState, OrderEvent> fulfill(Long orderId) {
-        StateMachine<OrderState, OrderEvent> stateMachine = this.build(orderId);
+    public StateMachine<OrderState, OrderEvent> fulfill(final Long orderId) {
+        final StateMachine<OrderState, OrderEvent> stateMachine = this.build(orderId);
 
-        Message<OrderEvent> fulfilmentMessage = MessageBuilder.withPayload(com.nurettin.orderservice.domain.OrderEvent.FULFIL)
+        final Message<OrderEvent> fulfilmentMessage = MessageBuilder.withPayload(com.nurettin.orderservice.domain.OrderEvent.FULFIL)
                 .setHeader(ORDER_ID_HEADER, orderId)
                 .build();
         stateMachine.sendEvent(fulfilmentMessage);
@@ -54,34 +54,31 @@ public class OrderService {
         return stateMachine;
     }
 
-    public Order getOrderById(Long id) {
+    public Order getOrderById(final Long id) {
         return repository.findById(id).get();
     }
 
-    private StateMachine<OrderState, OrderEvent> build(Long orderId) {
-        Order order = this.repository.findById(orderId).get();
-        String orderIdKey = Long.toString(orderId);
-        StateMachine<OrderState, OrderEvent> stateMachine = this.stateMachineFactory.getStateMachine(orderIdKey);
+    private StateMachine<OrderState, OrderEvent> build(final Long orderId) {
+        final Order order = this.repository.findById(orderId).get();
+        final String orderIdKey = Long.toString(orderId);
+        final StateMachine<OrderState, OrderEvent> stateMachine = this.stateMachineFactory.getStateMachine(orderIdKey);
         stateMachine.stop();
 
         stateMachine.getStateMachineAccessor()
                 .doWithAllRegions(stateMachineAccess -> {
                     stateMachineAccess.addStateMachineInterceptor(new StateMachineInterceptorAdapter<OrderState, OrderEvent>() {
                         @Override
-                        public void preStateChange(State<OrderState, OrderEvent> state, Message<OrderEvent> message, Transition<OrderState, OrderEvent> transition, StateMachine<OrderState, OrderEvent> stateMachine1) {
-                            Optional.ofNullable(message).ifPresent(msg -> {
-                                Optional.ofNullable(Long.class.cast(msg.getHeaders().getOrDefault(ORDER_ID_HEADER, -1L)))
-                                        .ifPresent(orderId1 -> {
-                                            repository.findById(orderId1).ifPresent(order1 -> {
-                                                order1.setOrderState(state.getId());
-                                                repository.save(order1);
-                                            });
+                        public void preStateChange(final State<OrderState, OrderEvent> state, final Message<OrderEvent> message, final Transition<OrderState, OrderEvent> transition, final StateMachine<OrderState, OrderEvent> stateMachine1) {
+                            Optional.ofNullable(message).flatMap(msg -> Optional.ofNullable(Long.class.cast(msg.getHeaders().getOrDefault(ORDER_ID_HEADER, -1L)))).ifPresent(orderId1 -> {
+                                repository.findById(orderId1).ifPresent(order1 -> {
+                                    order1.setOrderState(state.getId());
+                                    repository.save(order1);
+                                });
 
-                                        });
                             });
                         }
                     });
-                    stateMachineAccess.resetStateMachine(new DefaultStateMachineContext<OrderState, OrderEvent>(order.getOrderState(), null, null, null));
+                    stateMachineAccess.resetStateMachine(new DefaultStateMachineContext<>(order.getOrderState(), null, null, null));
                 });
         stateMachine.start();
 

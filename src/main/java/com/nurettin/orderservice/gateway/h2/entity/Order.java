@@ -21,7 +21,7 @@ public class Order {
     private Date dateTime;
     private String state;
 
-    public Order(Date date, OrderState states) {
+    public Order(final Date date, final OrderState states) {
         this.dateTime = date;
         this.state = states.name();
     }
@@ -30,7 +30,7 @@ public class Order {
         return com.nurettin.orderservice.domain.OrderState.valueOf(this.state);
     }
 
-    public void setOrderState(OrderState orderStates) {
+    public void setOrderState(final OrderState orderStates) {
         this.state = orderStates.name();
     }
 }
